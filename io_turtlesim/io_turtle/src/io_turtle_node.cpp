@@ -118,16 +118,24 @@ int main(int argc, char** argv) {
     // Service request
     RegisterTurtle req;
 
-    // Send request
-    if (!client.call(req)) {
-        ROS_ERROR_STREAM("Unable to make a call to register turtle at the command center.");
-        return 1;
-    }
+    // ROS_ERROR_STREAM("WAITING SERVICE register_turtle*+*+*+*+*+*+*+*+*+*+");    
+    // // Send request
+    // if (!client.call(req)) {
+    //     ROS_ERROR_STREAM("Unable to make a call to register turtle at the command center.");
+    //     return 1;
+    // }
 
     // Successfully register with command center
-    id = req.response.id;
+    // id = req.response.id;
+    id = 0;
+    
     io_turtle.register_turtle(nh, id, sim, queue_size);
     ROS_INFO("Registered myself as Turtle%d", id);
+
+    // Construct ROS action server for goals
+    std::string action_server_name = "turtle_" + std::to_string(id) + "/goto_action";
+    GoToActionServer goto_server(nh, action_server_name, &io_turtle, frequency, timeout);
+
 
     if (sim) {
         ROS_INFO("Starting node in simulation mode.");
@@ -150,10 +158,6 @@ int main(int argc, char** argv) {
             ROS_ERROR("Unable to register with simulation environment.");
         }
     }
-
-    // Construct ROS action server for goals
-    std::string action_server_name = "turtle_" + std::to_string(id) + "/goto_action";
-    GoToActionServer goto_server(nh, action_server_name, &io_turtle, frequency, timeout);
 
     while (ros::ok()) {
         if (io_turtle.check_collision()) {
